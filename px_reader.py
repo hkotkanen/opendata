@@ -224,6 +224,12 @@ def build_dataframe(px):
     Build a Pandas DataFrame from Px rows and columns
     """
     cols, rows = index(px)
+
+    # apparently pandas doesn't like field names with non-ascii characters (and spaces)
+    # NB. this is a dirty, dirty hack that is meant to help loading a specific file
+    for i, indicator in enumerate(cols[0]):
+        cols[0][i] = indicator.replace(u'ä', u'a').replace(u'ö', u'o').replace(' ', '_')
+
     col_index = pd.MultiIndex.from_arrays(cols)
     row_index = pd.MultiIndex.from_arrays(rows)
     return pd.DataFrame(px.data, index=row_index, columns=col_index)
