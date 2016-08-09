@@ -42,7 +42,7 @@ class Px(object):
     Creates dynamically fields containing everything from PC Axis file's metadata part
     (excluding multilingual fields for the moment #FIXME multilingual fields)
     """
-    
+
     _timeformat = '%Y-%m-%d %H:%M'
     _subfield_re = re.compile(r'^(.*?)\("(.*?)"\)=')
     _items_re = re.compile(r'"(.*?)"')
@@ -66,14 +66,16 @@ class Px(object):
         value = line[m.end():]
         return field.lower(), subkey, self._clean_value(value)
 
-    def _split_px(self, px_doc):
+    def _split_px(self, px_doc, encoding):
         """
         Parses metadata keywords from px_doc and inserts those into self object
         Returns the data part
         """
         meta, data = open(px_doc, 'U').read().split("DATA=")
-        meta = unicode(meta, 'iso-8859-1')
-        data = unicode(data, 'iso-8859-1')
+        # meta = unicode(meta, 'iso-8859-1')
+        # data = unicode(data, 'iso-8859-1')
+        meta = unicode(meta, encoding)
+        data = unicode(data, encoding)
         nmeta = {}
         for line in meta.strip().split(';\n'):
             if line:
@@ -86,15 +88,15 @@ class Px(object):
                         setattr(self, field, OD(
                             [(subkey, value)]
                             ))
-                else: 
+                else:
                     field, value = line.split('=', 1)
                     if not field.startswith('NOTE'):
                         setattr(self, field.strip().lower(), self._clean_value(value))
                         #TODO: NOTE keywords can be standalone or have subfields...
         return data.strip()[:-1]
-   
-    def __init__(self, px_doc):
-        data = self._split_px(px_doc)
+
+    def __init__(self, px_doc, encoding='iso-8859-1'):
+        data = self._split_px(px_doc, encoding)
         self._data = data.replace('"', '')
 
         if type(self.stub) != type(list()):
@@ -112,17 +114,17 @@ class Px(object):
         #
         self.cols = reduce(mul, [len(self.values.get(i)) for i in self.heading], 1)
         self.rows = reduce(mul, [len(self.values.get(i)) for i in self.stub], 1)
-    
+
    # def __unicode__(self):
   #      return u'PX file %s: %s' % (self.name, self.title)
-   
+
     #def __repr__(self):
     #    return unicode(self)
-   
+
     @property
     def created_dt(self):
         return datetime.datetime.strptime(self.created, self._timeformat)
-   
+
     @property
     def updated_dt(self):
         return datetime.datetime.strptime(self.updated, self._timeformat)
